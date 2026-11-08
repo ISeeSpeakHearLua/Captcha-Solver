@@ -1,0 +1,122 @@
+import nodriver
+import asyncio
+import random
+import numpy
+import pyautogui
+import pygetwindow as gw
+import win32gui
+import win32process
+
+def find_hwnd(pid):
+    result = []
+
+    def callback(hwnd, _):
+        _, window_pid = win32process.GetWindowThreadProcessId(hwnd)
+
+        if window_pid == pid and win32gui.IsWindowVisible(hwnd):
+            result.append(hwnd)
+
+    win32gui.EnumWindows(callback, None)
+
+    return result
+
+
+
+
+async def Gradually(element, text):
+    for char in text:
+        await element.send_keys(char)
+        await asyncio.sleep(0.1)
+
+async def main():
+    browser = await nodriver.start(browser_executable_path=r"c:\Users\roblo\Downloads\chrome-win\chrome.exe",headless=False)
+    tab = await browser.get("https://roblox.com/CreateAccount")
+    print("Browser attributes:")
+    hwnds = find_hwnd(browser._process_pid)[0]
+    x1, y1, x2, y2 = win32gui.GetWindowRect(hwnds)
+
+
+    await asyncio.sleep(1.7)
+    CookieBanner = await tab.find("Decline All")
+    print("Clicked Banner")
+    await CookieBanner.click()
+
+
+    await asyncio.sleep(1.16)
+
+    await tab.evaluate("""
+        (() => {
+            const el = document.querySelector('#MonthDropdown');
+            Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(el, 'Feb');
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        })()
+    """)
+    
+    await asyncio.sleep(1.74)
+
+    await tab.evaluate("""
+        (() => {
+            const el = document.querySelector('#DayDropdown');
+            Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(el, '15');
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        })()
+    """)
+
+    await asyncio.sleep(0.74)
+    
+
+    await tab.evaluate("""
+        (() => {
+            const el = document.querySelector('#YearDropdown');
+            Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(el, '1995');
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        })()
+    """)
+
+    await asyncio.sleep(0.8)
+    alphabet = "abcdefghijklmnopqrstuvwxyz"
+    nums = "1234567890"
+    RandUser = ""
+    for i in range(0,10):
+        p = random.choice(alphabet)
+        n = random.choice(nums)
+        RandUser += p
+        RandUser += n
+
+
+    RandPass = ""
+    for i in range(0,6):
+        p = random.choice(alphabet)
+        n = random.choice(nums)
+        RandPass += p
+        RandPass += n
+
+
+    UsernameField = await tab.select("#signup-username")
+    await Gradually(UsernameField, RandUser)
+
+    await asyncio.sleep(2.12)
+    
+    PassField = await tab.select("#signup-password")
+    await Gradually(PassField, RandPass)
+
+    await asyncio.sleep(1.1)
+
+    signupB = await tab.find("#signup-button")
+    await signupB.click()
+
+    await asyncio.sleep(6)
+
+    ss = pyautogui.screenshot(
+        region=(x1,y1, x2 - x1, y2 - x1)
+    )
+    ss.save("Training Data1.png")
+
+    image = numpy.array(ss)
+
+
+
+    await asyncio.sleep(9999999)
+    browser.stop()
+
+nodriver.loop().run_until_complete(main())
