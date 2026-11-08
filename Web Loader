@@ -1,0 +1,157 @@
+import nodriver
+import asyncio
+import random
+import numpy
+import pyautogui
+import pygetwindow as gw
+import win32gui
+import win32process
+
+def find_hwnd(pid):
+    result = []
+
+    def callback(hwnd, _):
+        _, window_pid = win32process.GetWindowThreadProcessId(hwnd)
+
+        if window_pid == pid and win32gui.IsWindowVisible(hwnd):
+            result.append(hwnd)
+
+    win32gui.EnumWindows(callback, None)
+
+    return result
+
+
+async def Gradually(element, text):
+    for char in text:
+        await element.send_keys(char)
+        await asyncio.sleep(random.uniform(0.05, 0.15))
+
+
+async def main():
+    while True:
+        browser = await nodriver.start(browser_executable_path=r"c:\Users\roblo\Downloads\chrome-win\chrome.exe", headless=False)
+        tab = await browser.get("https://roblox.com/CreateAccount")
+        print("Browser attributes:")
+        hwnds = find_hwnd(browser._process_pid)[0]
+        x1, y1, x2, y2 = win32gui.GetWindowRect(hwnds)
+
+        await asyncio.sleep(random.uniform(1.5, 2.0))
+        try:
+            CookieBanner = await tab.find("Accept All", best_match=True, timeout=2)
+            if not CookieBanner:
+                CookieBanner = await tab.find("Decline All", best_match=True, timeout=2)
+            
+            if CookieBanner:
+                print("Clicked Banner")
+                await CookieBanner.click()
+        except Exception:
+            pass
+
+        await asyncio.sleep(random.uniform(1.0, 1.3))
+
+        month_btn = await tab.select('button[aria-label="Month"]', timeout=3)
+        if not month_btn:
+            print("Old UI detected. Restarting...")
+            browser.stop()
+            continue
+
+        RandMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+        target_month = random.choice(RandMonths)
+        
+        RandDays = [str(i).zfill(2) for i in range(1, 29)]
+        target_day = random.choice(RandDays)
+        
+        RandYears = [str(i) for i in range(1980, 2025)]
+        target_year = random.choice(RandYears)
+
+        await month_btn.click()
+        await asyncio.sleep(random.uniform(0.8, 1.2))
+        await tab.evaluate(f"""
+            (() => {{
+                const buttons = [...document.querySelectorAll('button[data-radix-collection-item]')];
+                const target = buttons.find(b => b.innerText.trim() === '{target_month}');
+                if (target) target.click();
+            }})()
+        """)
+        await asyncio.sleep(random.uniform(0.4, 0.7))
+
+        day_btn = await tab.select('button[aria-label="Day"]')
+        await day_btn.click()
+        await asyncio.sleep(random.uniform(0.8, 1.2))
+        await tab.evaluate(f"""
+            (() => {{
+                const buttons = [...document.querySelectorAll('button[data-radix-collection-item]')];
+                const target = buttons.find(b => b.innerText.trim() === '{target_day}');
+                if (target) target.click();
+            }})()
+        """)
+        await asyncio.sleep(random.uniform(0.4, 0.7))
+
+        year_btn = await tab.select('button[aria-label="Year"]')
+        await year_btn.click()
+        await asyncio.sleep(random.uniform(0.8, 1.2))
+        await tab.evaluate(f"""
+            (() => {{
+                const buttons = [...document.querySelectorAll('button[data-radix-collection-item]')];
+                const target = buttons.find(b => b.innerText.trim() === '{target_year}');
+                if (target) target.click();
+            }})()
+        """)
+        await asyncio.sleep(random.uniform(0.4, 0.7))
+
+        alphabet = "abcdefghijklmnopqrstuvwxyz"
+        nums = "1234567890"
+        RandUser = ""
+        for i in range(0, 10):
+            p = random.choice(alphabet)
+            n = random.choice(nums)
+            RandUser += p
+            RandUser += n
+
+        UsernameField = await tab.select("#signup-username")
+        await Gradually(UsernameField, RandUser)
+
+        await asyncio.sleep(random.uniform(1.8, 2.4))
+
+        continue_btn = await tab.find("Continue")
+        await continue_btn.click()
+
+        await asyncio.sleep(random.uniform(0.7, 1.1))
+        pyautogui.press('esc')
+        await asyncio.sleep(random.uniform(0.7, 1.1))
+        pyautogui.press('esc')
+
+        RandPass = ""
+        for i in range(0, 6):
+            p = random.choice(alphabet)
+            n = random.choice(nums)
+            RandPass += p
+            RandPass += n
+
+        PassField = await tab.select("#signup-v2-password")
+        await Gradually(PassField, RandPass)
+
+        await asyncio.sleep(random.uniform(0.9, 1.3))
+
+        add_btn = await tab.find("Add password")
+        await add_btn.click()
+
+        await asyncio.sleep(random.uniform(0.7, 1.1))
+        pyautogui.press('esc')
+        await asyncio.sleep(random.uniform(0.7, 1.1))
+        pyautogui.press('esc')
+
+        await asyncio.sleep(random.uniform(4.5, 5.5))
+
+        ss = pyautogui.screenshot(
+            region=(x1, y1, x2 - x1, y2 - y1)
+        )
+        ss.save("Training Data1.png")
+
+        image = numpy.array(ss)
+
+        await asyncio.sleep(9999999)
+        browser.stop()
+        break
+
+nodriver.loop().run_until_complete(main())
