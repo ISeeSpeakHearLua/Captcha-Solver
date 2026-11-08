@@ -1,0 +1,30 @@
+import random
+import sqlite3
+
+
+AccountDB = sqlite3.connect("Accounts.db")
+cursor = AccountDB.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS Accounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Username TEXT NOT NULL,
+    Password TEXT NOT NULL,
+    LoginCookie TEXT
+
+)
+""")
+
+AccountDB.commit()
+
+def InsertValues(CurrentName, CurrentPass, CurrentCookie):
+    cursor.execute("""
+        INSERT INTO Accounts (Username, Password, LoginCookie)
+        VALUES (?,?,?)
+
+    """, CurrentName, CurrentPass, CurrentCookie)
+
+
+
+
+AccountDB.close()
